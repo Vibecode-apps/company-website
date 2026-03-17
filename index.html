@@ -1,996 +1,266 @@
-<!DOCTYPE html>
-
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DRIP — Fashion Intelligence</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-–bg: #0a0a0a;
-–surface: #111111;
-–surface2: #1a1a1a;
-–border: #2a2a2a;
-–accent: #c8a96e;
-–accent2: #e8d5b0;
-–text: #f0ede8;
-–text-muted: #6b6560;
-–text-dim: #9d9590;
-–red: #c0392b;
-–green: #27ae60;
-}
-
-body {
-background: var(–bg);
-color: var(–text);
-font-family: ‘Barlow Condensed’, sans-serif;
-min-height: 100vh;
-overflow-x: hidden;
-}
-
-/* Grain overlay */
-body::before {
-content: ‘’;
-position: fixed;
-inset: 0;
-background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 256 256’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’ opacity=‘0.03’/%3E%3C/svg%3E”);
-pointer-events: none;
-z-index: 999;
-opacity: 0.4;
-}
-
-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding: 1.5rem 3rem;
-border-bottom: 1px solid var(–border);
-position: sticky;
-top: 0;
-background: rgba(10,10,10,0.95);
-backdrop-filter: blur(20px);
-z-index: 100;
-}
-
-.logo {
-font-family: ‘Playfair Display’, serif;
-font-size: 2rem;
-letter-spacing: 0.3em;
-color: var(–accent);
-}
-
-.logo span {
-font-style: italic;
-font-weight: 400;
-}
-
-.tagline {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.65rem;
-letter-spacing: 0.15em;
-color: var(–text-muted);
-text-transform: uppercase;
-}
-
-.main {
-max-width: 1100px;
-margin: 0 auto;
-padding: 4rem 2rem;
-}
-
-.hero-text {
-text-align: center;
-margin-bottom: 4rem;
-}
-
-.hero-text h1 {
-font-family: ‘Playfair Display’, serif;
-font-size: clamp(2.5rem, 6vw, 5rem);
-line-height: 1.1;
-color: var(–text);
-margin-bottom: 1rem;
-}
-
-.hero-text h1 em {
-color: var(–accent);
-font-style: italic;
-}
-
-.hero-text p {
-font-size: 1.1rem;
-letter-spacing: 0.05em;
-color: var(–text-dim);
-font-weight: 300;
-}
-
-/* Upload zone */
-.upload-zone {
-position: relative;
-border: 1px solid var(–border);
-background: var(–surface);
-border-radius: 2px;
-padding: 4rem 2rem;
-text-align: center;
-cursor: pointer;
-transition: all 0.3s ease;
-overflow: hidden;
-}
-
-.upload-zone::before {
-content: ‘’;
-position: absolute;
-inset: 0;
-background: linear-gradient(135deg, transparent 40%, rgba(200,169,110,0.03) 100%);
-pointer-events: none;
-}
-
-.upload-zone:hover, .upload-zone.drag-over {
-border-color: var(–accent);
-background: var(–surface2);
-}
-
-.upload-zone.drag-over {
-box-shadow: inset 0 0 60px rgba(200,169,110,0.05);
-}
-
-.upload-icon {
-width: 60px;
-height: 60px;
-margin: 0 auto 1.5rem;
-opacity: 0.4;
-}
-
-.upload-label {
-font-size: 1.3rem;
-letter-spacing: 0.15em;
-color: var(–text-dim);
-margin-bottom: 0.5rem;
-}
-
-.upload-sub {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.7rem;
-color: var(–text-muted);
-letter-spacing: 0.1em;
-}
-
-#fileInput { display: none; }
-
-/* Camera section */
-.capture-btn {
-display: flex;
-align-items: center;
-gap: 0.5rem;
-margin: 1.5rem auto 0;
-background: none;
-border: 1px solid var(–border);
-color: var(–text-dim);
-padding: 0.6rem 1.5rem;
-font-family: ‘Barlow Condensed’, sans-serif;
-font-size: 0.9rem;
-letter-spacing: 0.12em;
-cursor: pointer;
-transition: all 0.2s;
-}
-
-.capture-btn:hover {
-border-color: var(–accent);
-color: var(–accent);
-}
-
-/* Preview */
-.preview-section {
-display: none;
-gap: 2rem;
-margin-top: 3rem;
-}
-
-.preview-section.active { display: grid; grid-template-columns: 1fr 1fr; }
-
-.preview-box {
-position: relative;
-background: var(–surface);
-border: 1px solid var(–border);
-border-radius: 2px;
-overflow: hidden;
-aspect-ratio: 4/3;
-}
-
-.preview-box img, .preview-box video {
-width: 100%;
-height: 100%;
-object-fit: cover;
-}
-
-.preview-overlay {
-position: absolute;
-inset: 0;
-background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
-display: flex;
-align-items: flex-end;
-padding: 1rem;
-}
-
-.preview-label {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.65rem;
-letter-spacing: 0.15em;
-color: var(–accent2);
-text-transform: uppercase;
-}
-
-.analyze-btn {
-width: 100%;
-margin-top: 1.5rem;
-padding: 1.1rem;
-background: var(–accent);
-color: #0a0a0a;
-border: none;
-font-family: ‘Barlow Condensed’, sans-serif;
-font-size: 1rem;
-font-weight: 700;
-letter-spacing: 0.25em;
-text-transform: uppercase;
-cursor: pointer;
-transition: all 0.2s;
-position: relative;
-overflow: hidden;
-}
-
-.analyze-btn::after {
-content: ‘’;
-position: absolute;
-inset: 0;
-background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-transform: translateX(-100%);
-transition: transform 0.4s;
-}
-
-.analyze-btn:hover::after { transform: translateX(100%); }
-.analyze-btn:hover { background: var(–accent2); }
-.analyze-btn:disabled { background: var(–border); color: var(–text-muted); cursor: not-allowed; }
-
-/* Results */
-.results-section {
-display: none;
-margin-top: 3rem;
-animation: fadeUp 0.5s ease forwards;
-}
-
-.results-section.active { display: block; }
-
-@keyframes fadeUp {
-from { opacity: 0; transform: translateY(20px); }
-to { opacity: 1; transform: translateY(0); }
-}
-
-.section-title {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.7rem;
-letter-spacing: 0.2em;
-color: var(–text-muted);
-text-transform: uppercase;
-margin-bottom: 1.5rem;
-padding-bottom: 0.75rem;
-border-bottom: 1px solid var(–border);
-}
-
-.brand-cards {
-display: grid;
-grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-gap: 1px;
-background: var(–border);
-border: 1px solid var(–border);
-margin-bottom: 3rem;
-}
-
-.brand-card {
-background: var(–surface);
-padding: 1.5rem;
-transition: background 0.2s;
-}
-
-.brand-card:hover { background: var(–surface2); }
-
-.brand-tag {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.6rem;
-letter-spacing: 0.15em;
-color: var(–accent);
-text-transform: uppercase;
-margin-bottom: 0.4rem;
-}
-
-.brand-name {
-font-family: ‘Playfair Display’, serif;
-font-size: 1.5rem;
-color: var(–text);
-margin-bottom: 0.3rem;
-}
-
-.brand-item {
-font-size: 0.85rem;
-color: var(–text-dim);
-letter-spacing: 0.05em;
-margin-bottom: 0.6rem;
-}
-
-.confidence-bar {
-height: 2px;
-background: var(–border);
-border-radius: 1px;
-margin-top: 0.8rem;
-overflow: hidden;
-}
-
-.confidence-fill {
-height: 100%;
-background: linear-gradient(90deg, var(–accent), var(–accent2));
-border-radius: 1px;
-transition: width 1s ease;
-}
-
-.confidence-label {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.6rem;
-color: var(–text-muted);
-margin-top: 0.4rem;
-display: flex;
-justify-content: space-between;
-}
-
-/* Shopping results */
-.shop-grid {
-display: grid;
-grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-gap: 1rem;
-}
-
-.shop-card {
-background: var(–surface);
-border: 1px solid var(–border);
-border-radius: 2px;
-padding: 1.25rem 1.5rem;
-display: flex;
-justify-content: space-between;
-align-items: center;
-gap: 1rem;
-transition: all 0.2s;
-text-decoration: none;
-cursor: pointer;
-}
-
-.shop-card:hover {
-border-color: var(–accent);
-background: var(–surface2);
-transform: translateY(-1px);
-}
-
-.shop-info { flex: 1; }
-
-.shop-retailer {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.65rem;
-letter-spacing: 0.15em;
-color: var(–accent);
-text-transform: uppercase;
-margin-bottom: 0.3rem;
-}
-
-.shop-item-name {
-font-size: 1rem;
-font-weight: 600;
-letter-spacing: 0.05em;
-color: var(–text);
-margin-bottom: 0.2rem;
-}
-
-.shop-item-desc {
-font-size: 0.8rem;
-color: var(–text-muted);
-letter-spacing: 0.03em;
-}
-
-.shop-price {
-font-family: ‘Playfair Display’, serif;
-font-size: 1.2rem;
-color: var(–accent2);
-white-space: nowrap;
-}
-
-.shop-arrow {
-color: var(–text-muted);
-font-size: 1.2rem;
-margin-left: 0.5rem;
-transition: transform 0.2s;
-}
-
-.shop-card:hover .shop-arrow { transform: translateX(4px); color: var(–accent); }
-
-/* Loading state */
-.loading {
-display: none;
-text-align: center;
-padding: 4rem 2rem;
-}
-
-.loading.active { display: block; }
-
-.loading-spinner {
-width: 40px;
-height: 40px;
-border: 1px solid var(–border);
-border-top-color: var(–accent);
-border-radius: 50%;
-animation: spin 0.8s linear infinite;
-margin: 0 auto 1.5rem;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.loading-text {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.75rem;
-letter-spacing: 0.15em;
-color: var(–text-muted);
-text-transform: uppercase;
-}
-
-.loading-step {
-font-size: 0.65rem;
-color: var(–text-muted);
-margin-top: 0.4rem;
-opacity: 0;
-animation: blink 2s ease infinite;
-}
-
-@keyframes blink { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
-
-/* Key input */
-.api-section {
-background: var(–surface);
-border: 1px solid var(–border);
-border-radius: 2px;
-padding: 1.5rem;
-margin-bottom: 2rem;
-display: flex;
-gap: 1rem;
-align-items: flex-end;
-}
-
-.api-section label {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.65rem;
-letter-spacing: 0.12em;
-color: var(–text-muted);
-text-transform: uppercase;
-display: block;
-margin-bottom: 0.4rem;
-}
-
-.api-input-wrap { flex: 1; }
-
-.api-input {
-width: 100%;
-background: var(–bg);
-border: 1px solid var(–border);
-color: var(–text);
-padding: 0.65rem 0.9rem;
-font-family: ‘DM Mono’, monospace;
-font-size: 0.8rem;
-outline: none;
-transition: border-color 0.2s;
-}
-
-.api-input:focus { border-color: var(–accent); }
-.api-input::placeholder { color: var(–text-muted); }
-
-.api-save-btn {
-background: var(–surface2);
-border: 1px solid var(–border);
-color: var(–text-dim);
-padding: 0.65rem 1.2rem;
-font-family: ‘Barlow Condensed’, sans-serif;
-font-size: 0.85rem;
-letter-spacing: 0.1em;
-cursor: pointer;
-transition: all 0.2s;
-}
-
-.api-save-btn:hover { border-color: var(–accent); color: var(–accent); }
-
-.api-status {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.6rem;
-letter-spacing: 0.1em;
-margin-top: 0.3rem;
-height: 1em;
-}
-
-.api-status.ok { color: var(–green); }
-.api-status.err { color: var(–red); }
-
-/* Error state */
-.error-box {
-display: none;
-background: rgba(192,57,43,0.1);
-border: 1px solid rgba(192,57,43,0.3);
-padding: 1rem 1.5rem;
-color: #e74c3c;
-font-family: ‘DM Mono’, monospace;
-font-size: 0.75rem;
-letter-spacing: 0.05em;
-margin-top: 1rem;
-}
-
-.error-box.active { display: block; }
-
-/* Divider */
-.divider {
-border: none;
-border-top: 1px solid var(–border);
-margin: 2.5rem 0;
-}
-
-/* Camera modal */
-.modal {
-display: none;
-position: fixed;
-inset: 0;
-background: rgba(0,0,0,0.9);
-z-index: 500;
-justify-content: center;
-align-items: center;
-}
-
-.modal.active { display: flex; }
-
-.modal-inner {
-background: var(–surface);
-border: 1px solid var(–border);
-padding: 2rem;
-max-width: 600px;
-width: 90%;
-}
-
-.modal-video {
-width: 100%;
-aspect-ratio: 4/3;
-background: #000;
-display: block;
-margin-bottom: 1rem;
-}
-
-.modal-actions { display: flex; gap: 1rem; }
-
-.snap-btn {
-flex: 1;
-padding: 0.9rem;
-background: var(–accent);
-border: none;
-color: #0a0a0a;
-font-family: ‘Barlow Condensed’, sans-serif;
-font-size: 1rem;
-font-weight: 700;
-letter-spacing: 0.2em;
-cursor: pointer;
-transition: background 0.2s;
-}
-
-.snap-btn:hover { background: var(–accent2); }
-
-.cancel-btn {
-padding: 0.9rem 1.5rem;
-background: none;
-border: 1px solid var(–border);
-color: var(–text-dim);
-font-family: ‘Barlow Condensed’, sans-serif;
-font-size: 0.9rem;
-letter-spacing: 0.1em;
-cursor: pointer;
-transition: all 0.2s;
-}
-
-.cancel-btn:hover { border-color: var(–accent); color: var(–accent); }
-
-canvas { display: none; }
-
-@media (max-width: 700px) {
-header { padding: 1rem 1.5rem; }
-.main { padding: 2rem 1rem; }
-.preview-section.active { grid-template-columns: 1fr; }
-.api-section { flex-direction: column; }
-}
-</style>
-
-</head>
-<body>
-
-<header>
-  <div class="logo">D<span>R</span>IP</div>
-  <div class="tagline">Fashion Intelligence Engine</div>
-</header>
-
-<div class="main">
-
-  <div class="hero-text">
-    <h1>Identify <em>any</em> look,<br>shop it instantly.</h1>
-    <p>Upload a photo — our AI reads the brands and finds where to buy.</p>
-  </div>
-
-  <!-- API Key -->
-
-  <div class="api-section">
-    <div class="api-input-wrap">
-      <label>Anthropic API Key</label>
-      <input type="password" id="apiKey" class="api-input" placeholder="sk-ant-...">
-      <div class="api-status" id="apiStatus"></div>
-    </div>
-    <button class="api-save-btn" onclick="saveKey()">Save Key</button>
-  </div>
-
-  <!-- Upload -->
-
-  <div class="upload-zone" id="uploadZone">
-    <svg class="upload-icon" viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="1.5">
-      <rect x="4" y="4" width="52" height="52" rx="1"/>
-      <circle cx="22" cy="22" r="6"/>
-      <path d="M4 42 L18 28 L28 38 L38 24 L56 44"/>
-    </svg>
-    <div class="upload-label">DROP PHOTO HERE</div>
-    <div class="upload-sub">or click to browse · jpg, png, webp</div>
-    <button class="capture-btn" id="cameraBtn" onclick="openCamera(event)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M2 12a10 10 0 1 0 20 0"/><path d="M8 3h8l2 3H6z"/></svg>
-      USE CAMERA
-    </button>
-    <input type="file" id="fileInput" accept="image/*">
-  </div>
-
-  <div class="error-box" id="errorBox"></div>
-
-  <!-- Preview + analyze -->
-
-  <div class="preview-section" id="previewSection">
-    <div class="preview-box">
-      <img id="previewImg" src="" alt="Preview">
-      <div class="preview-overlay">
-        <div class="preview-label">Your photo</div>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;justify-content:center;gap:1rem;">
-      <div style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--text-dim);line-height:1.4;">
-        Ready to decode<br>this look?
-      </div>
-      <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.6;">
-        Our AI will scan for visible logos, silhouettes, design signatures, and brand patterns across clothing, shoes, and accessories.
-      </p>
-      <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">ANALYZE LOOK →</button>
-    </div>
-  </div>
-
-  <!-- Loading -->
-
-  <div class="loading" id="loadingState">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">Analyzing your look</div>
-    <div class="loading-step" id="loadStep">Scanning for brand signatures...</div>
-  </div>
-
-  <!-- Results -->
-
-  <div class="results-section" id="resultsSection">
-    <div class="section-title">Identified Brands & Pieces</div>
-    <div class="brand-cards" id="brandCards"></div>
-
-```
-<div class="section-title">Shop This Look & Similar Items</div>
-<div class="shop-grid" id="shopGrid"></div>
-```
-
-  </div>
-
-</div>
-
-<!-- Camera modal -->
-
-<div class="modal" id="cameraModal">
-  <div class="modal-inner">
-    <video class="modal-video" id="cameraFeed" autoplay playsinline muted></video>
-    <canvas id="snapCanvas"></canvas>
-    <div class="modal-actions">
-      <button class="snap-btn" onclick="snapPhoto()">CAPTURE PHOTO</button>
-      <button class="cancel-btn" onclick="closeCamera()">CANCEL</button>
-    </div>
-  </div>
-</div>
-
-<script>
-let currentImageBase64 = null;
-let currentMediaType = 'image/jpeg';
-let cameraStream = null;
-
-// Load saved key
-window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('drip_api_key');
-  if (saved) {
-    document.getElementById('apiKey').value = saved;
-    document.getElementById('apiStatus').textContent = 'KEY LOADED';
-    document.getElementById('apiStatus').className = 'api-status ok';
-  }
-});
-
-function saveKey() {
-  const key = document.getElementById('apiKey').value.trim();
-  if (!key.startsWith('sk-ant-')) {
-    document.getElementById('apiStatus').textContent = 'INVALID KEY FORMAT';
-    document.getElementById('apiStatus').className = 'api-status err';
-    return;
-  }
-  localStorage.setItem('drip_api_key', key);
-  document.getElementById('apiStatus').textContent = 'SAVED ✓';
-  document.getElementById('apiStatus').className = 'api-status ok';
-}
-
-// Drag & drop
-const zone = document.getElementById('uploadZone');
-zone.addEventListener('click', (e) => {
-  if (e.target.closest('#cameraBtn')) return;
-  document.getElementById('fileInput').click();
-});
-
-zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
-zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-zone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  zone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file) processFile(file);
-});
-
-document.getElementById('fileInput').addEventListener('change', (e) => {
-  if (e.target.files[0]) processFile(e.target.files[0]);
-});
-
-function processFile(file) {
-  const typeMap = { 'image/jpeg': 'image/jpeg', 'image/jpg': 'image/jpeg', 'image/png': 'image/png', 'image/gif': 'image/gif', 'image/webp': 'image/webp' };
-  currentMediaType = typeMap[file.type] || 'image/jpeg';
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    const dataUrl = ev.target.result;
-    currentImageBase64 = dataUrl.split(',')[1];
-    document.getElementById('previewImg').src = dataUrl;
-    document.getElementById('previewSection').classList.add('active');
-    document.getElementById('resultsSection').classList.remove('active');
-    showError('');
-  };
-  reader.readAsDataURL(file);
-}
-
-// Camera
-function openCamera(e) {
-  e.stopPropagation();
-  document.getElementById('cameraModal').classList.add('active');
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-    .then(stream => {
-      cameraStream = stream;
-      document.getElementById('cameraFeed').srcObject = stream;
-    })
-    .catch(() => {
-      closeCamera();
-      showError('Camera access denied. Please use photo upload instead.');
-    });
-}
-
-function closeCamera() {
-  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
-  document.getElementById('cameraModal').classList.remove('active');
-}
-
-function snapPhoto() {
-  const video = document.getElementById('cameraFeed');
-  const canvas = document.getElementById('snapCanvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-  currentImageBase64 = dataUrl.split(',')[1];
-  document.getElementById('previewImg').src = dataUrl;
-  document.getElementById('previewSection').classList.add('active');
-  document.getElementById('resultsSection').classList.remove('active');
-  closeCamera();
-}
-
-// Analyze
-async function analyze() {
-  const key = document.getElementById('apiKey').value.trim() || localStorage.getItem('drip_api_key');
-  if (!key) { showError('Please enter your Anthropic API key above.'); return; }
-  if (!currentImageBase64) { showError('Please upload a photo first.'); return; }
-
-  showError('');
-  document.getElementById('loadingState').classList.add('active');
-  document.getElementById('resultsSection').classList.remove('active');
-  document.getElementById('analyzeBtn').disabled = true;
-
-  const steps = ['Scanning for brand signatures...', 'Detecting garment types...', 'Cross-referencing style databases...', 'Generating shopping results...'];
-  let stepIdx = 0;
-  const stepEl = document.getElementById('loadStep');
-  const stepInterval = setInterval(() => {
-    stepEl.textContent = steps[stepIdx % steps.length];
-    stepIdx++;
-  }, 2000);
-
-  try {
-    let response;
-    try {
-      response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-opus-4-5',
-          max_tokens: 2000,
-          system: 'You are a fashion expert. You MUST respond with ONLY raw valid JSON. No markdown, no explanation, no code fences. Just the JSON object.',
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: { type: 'base64', media_type: currentMediaType, data: currentImageBase64 }
-              },
-              {
-                type: 'text',
-                text: `Analyze this image for clothing brands and items. Return ONLY this JSON structure with no other text:
-{"identified":[{"brand":"Brand Name","item":"item type","description":"what you see","confidence":80}],"shopping":[{"retailer":"Store Name","item":"Product name","description":"why it matches","price":"$XX-$XX","url":"https://store.com/path"}],"style_summary":"one sentence vibe description"}
+import { useState, useRef, useCallback } from "react";
+
+const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
+
+async function analyzeOutfit(base64, mediaType) {
+  const res = await fetch(ANTHROPIC_API, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({
+      model: "claude-opus-4-5",
+      max_tokens: 2000,
+      system:
+        'You are a world-class fashion expert. Respond ONLY with raw valid JSON — no markdown, no explanation, no code fences. Just the JSON object.',
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+            {
+              type: "text",
+              text: `Analyze this outfit image. Return ONLY this JSON:
+{"identified":[{"brand":"Brand or style name","item":"item type","description":"what you see","confidence":80}],"shopping":[{"retailer":"Store","item":"Product","description":"why it matches","price":"$XX-$XX","url":"https://store.com/path"}],"style_summary":"one sentence vibe"}
 
 Rules:
-- identified: 2-5 items with visible brands OR style-based guesses
-- shopping: 6-8 results mixing official sites, Farfetch, SSENSE, StockX, Grailed, ASOS
-- If no brand visible, guess from style/silhouette and set confidence below 60
-- Use real retailer URLs`
-              }
-            ]
-          }]
-        })
-      });
-    } catch (networkErr) {
-      throw new Error('Network error — check your internet connection. ' + networkErr.message);
-    }
-
-    clearInterval(stepInterval);
-
-    // Try to parse response body regardless of status
-    let data;
-    try {
-      data = await response.json();
-    } catch (e) {
-      throw new Error(`Server returned non-JSON (status ${response.status}). Check your API key.`);
-    }
-
-    if (!response.ok) {
-      const msg = data?.error?.message || data?.error?.type || JSON.stringify(data);
-      throw new Error(`API error ${response.status}: ${msg}`);
-    }
-
-    // Extract text
-    let text = '';
-    for (const block of (data.content || [])) {
-      if (block.type === 'text') text += block.text;
-    }
-    if (!text) throw new Error('API returned empty content. Full response: ' + JSON.stringify(data).slice(0, 300));
-
-    // Robust JSON extraction
-    let cleaned = text.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
-    if (start === -1 || end === -1) {
-      throw new Error('No JSON in response. Got: ' + cleaned.slice(0, 300));
-    }
-
-    let result;
-    try {
-      result = JSON.parse(cleaned.slice(start, end + 1));
-    } catch (parseErr) {
-      throw new Error('JSON parse error: ' + parseErr.message + ' | Text: ' + cleaned.slice(start, start + 300));
-    }
-
-    renderResults(result);
-
-  } catch (err) {
-    clearInterval(stepInterval);
-    showError('Analysis failed: ' + err.message);
-  } finally {
-    document.getElementById('loadingState').classList.remove('active');
-    document.getElementById('analyzeBtn').disabled = false;
-  }
-}
-
-function renderResults(data) {
-  // Brand cards
-  const brandContainer = document.getElementById('brandCards');
-  brandContainer.innerHTML = '';
-
-  if (!data.identified || data.identified.length === 0) {
-    brandContainer.innerHTML = '<div class="brand-card" style="grid-column:1/-1"><div class="brand-item">No specific brands identified. Try a clearer image with visible logos or distinctive pieces.</div></div>';
-  } else {
-    data.identified.forEach(item => {
-      const card = document.createElement('div');
-      card.className = 'brand-card';
-      card.innerHTML = `
-        <div class="brand-tag">${item.item || 'item'}</div>
-        <div class="brand-name">${item.brand}</div>
-        <div class="brand-item">${item.description}</div>
-        <div class="confidence-bar">
-          <div class="confidence-fill" style="width: 0%" data-target="${item.confidence || 70}"></div>
-        </div>
-        <div class="confidence-label">
-          <span>Confidence</span>
-          <span>${item.confidence || 70}%</span>
-        </div>
-      `;
-      brandContainer.appendChild(card);
-    });
-  }
-
-  if (data.style_summary) {
-    const summary = document.createElement('div');
-    summary.style.cssText = 'grid-column:1/-1;background:var(--surface2);padding:1rem 1.5rem;border-top:1px solid var(--border);font-family:Playfair Display,serif;font-style:italic;color:var(--accent2);font-size:1rem;';
-    summary.textContent = '"' + data.style_summary + '"';
-    brandContainer.appendChild(summary);
-  }
-
-  // Shopping grid
-  const shopContainer = document.getElementById('shopGrid');
-  shopContainer.innerHTML = '';
-
-  (data.shopping || []).forEach(item => {
-    const card = document.createElement('a');
-    card.className = 'shop-card';
-    card.href = item.url || '#';
-    card.target = '_blank';
-    card.rel = 'noopener noreferrer';
-    card.innerHTML = `
-      <div class="shop-info">
-        <div class="shop-retailer">${item.retailer}</div>
-        <div class="shop-item-name">${item.item}</div>
-        <div class="shop-item-desc">${item.description}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:0.3rem;flex-shrink:0;">
-        <div class="shop-price">${item.price || ''}</div>
-        <div class="shop-arrow">→</div>
-      </div>
-    `;
-    shopContainer.appendChild(card);
+- identified: 2-5 items, guess brand from logos/silhouette/design cues, lower confidence if unsure
+- shopping: 6-8 results mixing brand sites, Farfetch, SSENSE, StockX, Grailed, Depop, ASOS, Zara
+- Use realistic retailer URLs`,
+            },
+          ],
+        },
+      ],
+    }),
   });
 
-  document.getElementById('resultsSection').classList.add('active');
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error?.message || `API error ${res.status}`);
 
-  // Animate confidence bars
-  setTimeout(() => {
-    document.querySelectorAll('.confidence-fill').forEach(bar => {
-      bar.style.width = bar.dataset.target + '%';
-    });
-  }, 100);
+  const text = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+  const clean = text.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+  const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
+  if (s === -1 || e === -1) throw new Error("No JSON in response: " + clean.slice(0, 200));
+  return JSON.parse(clean.slice(s, e + 1));
 }
 
-function showError(msg) {
-  const box = document.getElementById('errorBox');
-  if (msg) {
-    box.textContent = '⚠ ' + msg;
-    box.classList.add('active');
-  } else {
-    box.classList.remove('active');
-    box.textContent = '';
-  }
-}
-</script>
+const MEDIA_MAP = { "image/jpeg": "image/jpeg", "image/jpg": "image/jpeg", "image/png": "image/png", "image/webp": "image/webp", "image/gif": "image/gif" };
 
-</body>
-</html>
+export default function DRIP() {
+  const [phase, setPhase] = useState("idle"); // idle | preview | loading | results | error
+  const [imgSrc, setImgSrc] = useState(null);
+  const [imgBase64, setImgBase64] = useState(null);
+  const [imgType, setImgType] = useState("image/jpeg");
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  const [loadStep, setLoadStep] = useState(0);
+  const fileRef = useRef();
+
+  const STEPS = ["Scanning for brand signatures…", "Detecting garment types…", "Cross-referencing style databases…", "Generating shopping results…"];
+
+  const processFile = useCallback((file) => {
+    const mt = MEDIA_MAP[file.type] || "image/jpeg";
+    setImgType(mt);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const url = ev.target.result;
+      setImgSrc(url);
+      setImgBase64(url.split(",")[1]);
+      setPhase("preview");
+      setResult(null);
+      setError("");
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files[0];
+    if (f) processFile(f);
+  };
+
+  const analyze = async () => {
+    setPhase("loading");
+    setError("");
+    let step = 0;
+    setLoadStep(0);
+    const iv = setInterval(() => { step = (step + 1) % STEPS.length; setLoadStep(step); }, 1800);
+    try {
+      const data = await analyzeOutfit(imgBase64, imgType);
+      setResult(data);
+      setPhase("results");
+    } catch (err) {
+      setError(err.message);
+      setPhase("error");
+    } finally {
+      clearInterval(iv);
+    }
+  };
+
+  const reset = () => { setPhase("idle"); setImgSrc(null); setResult(null); setError(""); };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#080808", color: "#f0ede8", fontFamily: "'Barlow Condensed', sans-serif", overflowX: "hidden" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&family=Barlow+Condensed:wght@300;400;600;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #111; } ::-webkit-scrollbar-thumb { background: #333; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes shimmer { 0%,100%{opacity:.4} 50%{opacity:1} }
+        @keyframes barGrow { from{width:0} }
+        .fade-up { animation: fadeUp .45s ease forwards; }
+        .shimmer { animation: shimmer 2s ease infinite; }
+        .bar-fill { animation: barGrow 1.2s ease forwards; }
+        .shop-card:hover { border-color: #c8a96e !important; background: #1a1a1a !important; transform: translateY(-2px); }
+        .brand-card:hover { background: #181818 !important; }
+        .upload-zone:hover { border-color: #c8a96e !important; background: #111 !important; }
+        .analyze-btn:hover:not(:disabled) { background: #e8d5b0 !important; }
+        .analyze-btn:disabled { background: #2a2a2a !important; color: #555 !important; cursor: not-allowed; }
+        .reset-btn:hover { color: #c8a96e !important; }
+      `}</style>
+
+      {/* Header */}
+      <header style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"1.4rem 2.5rem", borderBottom:"1px solid #1e1e1e", position:"sticky", top:0, background:"rgba(8,8,8,0.96)", backdropFilter:"blur(20px)", zIndex:50 }}>
+        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.9rem", letterSpacing:".3em", color:"#c8a96e" }}>D<em style={{fontStyle:"italic"}}>R</em>IP</div>
+        <div style={{ fontFamily:"'DM Mono',monospace", fontSize:".6rem", letterSpacing:".18em", color:"#555", textTransform:"uppercase" }}>Fashion Intelligence Engine</div>
+        {phase !== "idle" && (
+          <button className="reset-btn" onClick={reset} style={{ background:"none", border:"none", color:"#555", fontFamily:"'DM Mono',monospace", fontSize:".65rem", letterSpacing:".12em", cursor:"pointer", textTransform:"uppercase", transition:"color .2s" }}>
+            ← New Photo
+          </button>
+        )}
+      </header>
+
+      <div style={{ maxWidth:960, margin:"0 auto", padding:"3rem 1.5rem" }}>
+
+        {/* IDLE — Upload */}
+        {phase === "idle" && (
+          <div className="fade-up">
+            <div style={{ textAlign:"center", marginBottom:"3rem" }}>
+              <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:"clamp(2.2rem,5vw,4rem)", lineHeight:1.1, marginBottom:".8rem" }}>
+                Identify <em style={{color:"#c8a96e",fontStyle:"italic"}}>any</em> look,<br/>shop it instantly.
+              </h1>
+              <p style={{ color:"#6b6560", fontSize:"1rem", letterSpacing:".05em", fontWeight:300 }}>Drop a photo — AI reads the brands and finds where to buy.</p>
+            </div>
+
+            <div
+              className="upload-zone"
+              onDragOver={(e)=>{e.preventDefault();setDragOver(true)}}
+              onDragLeave={()=>setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={()=>fileRef.current.click()}
+              style={{ border:`1px solid ${dragOver?"#c8a96e":"#222"}`, background: dragOver?"#111":"#0d0d0d", borderRadius:2, padding:"4rem 2rem", textAlign:"center", cursor:"pointer", transition:"all .25s", boxShadow: dragOver?"inset 0 0 60px rgba(200,169,110,.06)":"none" }}
+            >
+              <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="#333" strokeWidth="1.2" style={{margin:"0 auto 1.5rem",display:"block"}}>
+                <rect x="3" y="3" width="46" height="46" rx="1"/>
+                <circle cx="19" cy="19" r="5"/>
+                <path d="M3 37 L16 24 L25 33 L34 21 L49 38"/>
+              </svg>
+              <div style={{ fontSize:"1.2rem", letterSpacing:".15em", color:"#555", marginBottom:".4rem", textTransform:"uppercase" }}>Drop Photo Here</div>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:".65rem", color:"#333", letterSpacing:".1em" }}>or click to browse · jpg · png · webp</div>
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={(e)=>e.target.files[0]&&processFile(e.target.files[0])}/>
+          </div>
+        )}
+
+        {/* PREVIEW */}
+        {phase === "preview" && (
+          <div className="fade-up" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"2rem", alignItems:"center" }}>
+            <div style={{ position:"relative", border:"1px solid #1e1e1e", borderRadius:2, overflow:"hidden", aspectRatio:"4/3" }}>
+              <img src={imgSrc} alt="Preview" style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+              <div style={{ position:"absolute", inset:0, background:"linear-gradient(to top, rgba(0,0,0,.65) 0%, transparent 50%)", display:"flex", alignItems:"flex-end", padding:"1rem" }}>
+                <span style={{ fontFamily:"'DM Mono',monospace", fontSize:".6rem", letterSpacing:".15em", color:"#c8a96e", textTransform:"uppercase" }}>Your photo</span>
+              </div>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:"1.2rem" }}>
+              <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.5rem", color:"#9d9590", lineHeight:1.4 }}>Ready to decode<br/>this look?</div>
+              <p style={{ fontSize:".85rem", color:"#4a4540", lineHeight:1.7 }}>Our AI scans for logos, silhouettes, design signatures, and brand patterns across clothing, shoes, and accessories.</p>
+              <button className="analyze-btn" onClick={analyze} style={{ padding:"1rem", background:"#c8a96e", border:"none", color:"#080808", fontFamily:"'Barlow Condensed',sans-serif", fontSize:"1rem", fontWeight:700, letterSpacing:".25em", textTransform:"uppercase", cursor:"pointer", transition:"background .2s", borderRadius:1 }}>
+                ANALYZE LOOK →
+              </button>
+              <button onClick={reset} style={{ background:"none", border:"none", color:"#333", fontFamily:"'DM Mono',monospace", fontSize:".65rem", letterSpacing:".1em", cursor:"pointer", textAlign:"left", padding:0 }}>
+                ← Choose different photo
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* LOADING */}
+        {phase === "loading" && (
+          <div className="fade-up" style={{ textAlign:"center", padding:"5rem 2rem" }}>
+            <div style={{ width:36, height:36, border:"1px solid #222", borderTopColor:"#c8a96e", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 1.8rem" }}/>
+            <div style={{ fontFamily:"'DM Mono',monospace", fontSize:".75rem", letterSpacing:".18em", color:"#555", textTransform:"uppercase", marginBottom:".5rem" }}>Analyzing your look</div>
+            <div className="shimmer" style={{ fontFamily:"'DM Mono',monospace", fontSize:".65rem", color:"#3a3a3a", letterSpacing:".1em" }}>{STEPS[loadStep]}</div>
+          </div>
+        )}
+
+        {/* ERROR */}
+        {phase === "error" && (
+          <div className="fade-up" style={{ background:"rgba(192,57,43,.08)", border:"1px solid rgba(192,57,43,.25)", padding:"1.5rem 2rem", borderRadius:2, marginTop:"2rem" }}>
+            <div style={{ fontFamily:"'DM Mono',monospace", fontSize:".7rem", color:"#e74c3c", letterSpacing:".08em", marginBottom:".8rem" }}>⚠ ANALYSIS FAILED</div>
+            <div style={{ fontFamily:"'DM Mono',monospace", fontSize:".65rem", color:"#a04030", lineHeight:1.6, wordBreak:"break-word" }}>{error}</div>
+            <button onClick={()=>setPhase("preview")} style={{ marginTop:"1.2rem", background:"none", border:"1px solid #333", color:"#888", padding:".5rem 1.2rem", fontFamily:"'Barlow Condensed',sans-serif", fontSize:".85rem", letterSpacing:".1em", cursor:"pointer" }}>TRY AGAIN</button>
+          </div>
+        )}
+
+        {/* RESULTS */}
+        {phase === "results" && result && (
+          <div className="fade-up">
+            {result.style_summary && (
+              <div style={{ fontFamily:"'Playfair Display',serif", fontStyle:"italic", fontSize:"1.15rem", color:"#c8a96e", borderLeft:"2px solid #c8a96e", paddingLeft:"1.2rem", marginBottom:"2.5rem", lineHeight:1.5 }}>
+                "{result.style_summary}"
+              </div>
+            )}
+
+            {/* Brand cards */}
+            <div style={{ fontFamily:"'DM Mono',monospace", fontSize:".65rem", letterSpacing:".2em", color:"#444", textTransform:"uppercase", marginBottom:"1.2rem", paddingBottom:".7rem", borderBottom:"1px solid #1a1a1a" }}>
+              Identified Brands & Pieces
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:1, background:"#1a1a1a", border:"1px solid #1a1a1a", marginBottom:"3rem" }}>
+              {(result.identified||[]).map((item,i)=>(
+                <div key={i} className="brand-card" style={{ background:"#0d0d0d", padding:"1.4rem", transition:"background .2s" }}>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:".58rem", letterSpacing:".15em", color:"#c8a96e", textTransform:"uppercase", marginBottom:".3rem" }}>{item.item}</div>
+                  <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.35rem", marginBottom:".25rem" }}>{item.brand}</div>
+                  <div style={{ fontSize:".8rem", color:"#6b6560", letterSpacing:".03em", marginBottom:".8rem", lineHeight:1.5 }}>{item.description}</div>
+                  <div style={{ height:1, background:"#1a1a1a", marginBottom:".5rem" }}/>
+                  <div style={{ display:"flex", justifyContent:"space-between" }}>
+                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:".58rem", color:"#333", letterSpacing:".1em" }}>Confidence</span>
+                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:".58rem", color:"#555" }}>{item.confidence}%</span>
+                  </div>
+                  <div style={{ height:2, background:"#1a1a1a", borderRadius:1, marginTop:".4rem", overflow:"hidden" }}>
+                    <div className="bar-fill" style={{ height:"100%", width:`${item.confidence}%`, background:"linear-gradient(90deg,#c8a96e,#e8d5b0)", borderRadius:1 }}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Shopping */}
+            <div style={{ fontFamily:"'DM Mono',monospace", fontSize:".65rem", letterSpacing:".2em", color:"#444", textTransform:"uppercase", marginBottom:"1.2rem", paddingBottom:".7rem", borderBottom:"1px solid #1a1a1a" }}>
+              Shop This Look & Similar Items
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:".75rem" }}>
+              {(result.shopping||[]).map((s,i)=>(
+                <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" className="shop-card"
+                  style={{ background:"#0d0d0d", border:"1px solid #1a1a1a", borderRadius:2, padding:"1.1rem 1.3rem", display:"flex", justifyContent:"space-between", alignItems:"center", gap:"1rem", textDecoration:"none", transition:"all .2s", cursor:"pointer" }}>
+                  <div style={{flex:1}}>
+                    <div style={{ fontFamily:"'DM Mono',monospace", fontSize:".58rem", letterSpacing:".15em", color:"#c8a96e", textTransform:"uppercase", marginBottom:".25rem" }}>{s.retailer}</div>
+                    <div style={{ fontSize:".95rem", fontWeight:600, letterSpacing:".04em", color:"#f0ede8", marginBottom:".2rem" }}>{s.item}</div>
+                    <div style={{ fontSize:".75rem", color:"#4a4540", letterSpacing:".02em" }}>{s.description}</div>
+                  </div>
+                  <div style={{ display:"flex", alignItems:"center", gap:".4rem", flexShrink:0 }}>
+                    <span style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.1rem", color:"#e8d5b0", whiteSpace:"nowrap" }}>{s.price}</span>
+                    <span style={{ color:"#333", fontSize:"1rem", transition:"transform .2s" }}>→</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
